@@ -20,6 +20,7 @@ const DEFAULT_INDICATOR_SETTINGS = {
 async function checkAndInjectIndicator() {
     try {
         const currentDomain = window.location.hostname;
+        console.log('Checking domain:', currentDomain);
         
         // Get all settings
         const storage = await chrome.storage.sync.get([
@@ -32,13 +33,21 @@ async function checkAndInjectIndicator() {
         const environments = storage[STORAGE_ENVIRONMENTS_KEY] || DEFAULT_ENVIRONMENTS;
         const indicatorSettings = storage[STORAGE_INDICATOR_SETTINGS_KEY] || DEFAULT_INDICATOR_SETTINGS;
         
+        console.log('Current indicator settings:', indicatorSettings);
+        
         // Check if current domain is marked
         const domainSettings = domains[currentDomain];
-        if (!domainSettings) return;
+        if (!domainSettings) {
+            console.log('Domain not marked');
+            return;
+        }
         
         // Find environment settings
         const environment = environments.find(env => env.id === domainSettings.environmentId);
-        if (!environment) return;
+        if (!environment) {
+            console.log('Environment not found');
+            return;
+        }
         
         // Inject the indicator
         injectIndicator(environment, indicatorSettings);
@@ -49,10 +58,13 @@ async function checkAndInjectIndicator() {
 
 // Get CSS for different indicator styles
 function getIndicatorStyles(environment, settings) {
+    console.log('Applying styles with settings:', settings);
+    
     const baseStyles = {
         position: 'fixed',
         top: '0',
         [settings.position === 'top-right' ? 'right' : 'left']: '0',
+        [settings.position === 'top-right' ? 'left' : 'right']: 'auto', // Important: reset the opposite property
         'z-index': '999999',
         'font-family': '-apple-system, BlinkMacSystemFont, sans-serif',
         'font-size': '12px',
@@ -75,21 +87,34 @@ function getIndicatorStyles(environment, settings) {
             gap: '4px'
         };
     } else { // triangle
-        return {
+        const triangleStyles = {
             ...baseStyles,
             width: '0',
             height: '0',
             'border-style': 'solid',
             'border-width': '0 32px 32px 0',
             'border-color': `transparent ${environment.color} transparent transparent`,
-            transform: settings.position === 'top-left' ? 'scaleX(-1)' : 'none',
+            'background-color': 'transparent',
             padding: '0'
         };
+
+        if (settings.position === 'top-left') {
+            triangleStyles['border-width'] = '0 0 32px 32px';
+            triangleStyles['border-color'] = `transparent transparent transparent ${environment.color}`;
+        }
+
+        return triangleStyles;
     }
 }
 
 // Inject the visual indicator
 function injectIndicator(environment, settings) {
+    // Remove any existing indicator
+    const existingIndicator = document.getElementById('prodornot-indicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
     // Create the indicator element
     const indicator = document.createElement('div');
     indicator.id = 'prodornot-indicator';
@@ -111,6 +136,7 @@ function injectIndicator(environment, settings) {
     
     // Add to page
     document.body.appendChild(indicator);
+    console.log('Indicator injected with styles:', styles);
 }
 
 // Listen for storage changes
@@ -120,6 +146,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         changes[STORAGE_ENVIRONMENTS_KEY] ||
         changes[STORAGE_INDICATOR_SETTINGS_KEY]
     )) {
+        console.log('Storage changes detected:', changes);
         // Remove existing indicator if present
         const existingIndicator = document.getElementById('prodornot-indicator');
         if (existingIndicator) {
@@ -127,6 +154,13 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         }
         
         // Recheck and inject if needed
+        checkAndInjectIndicator();
+    }
+});
+
+// Listen for messages from the options page
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'UPDATE_INDICATOR') {
         checkAndInjectIndicator();
     }
 });

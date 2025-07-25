@@ -222,15 +222,32 @@ async function saveIndicatorSettings() {
         const position = document.querySelector('input[name="indicator-position"]:checked').value;
         
         const indicatorSettings = { style, position };
+        console.log('Saving indicator settings:', indicatorSettings);
+        
         await chrome.storage.sync.set({ [STORAGE_INDICATOR_SETTINGS_KEY]: indicatorSettings });
         
         // Show success message
         saveIndicatorSettingsButton.textContent = 'Saved!';
+        
+        // Notify all tabs to update their indicators
+        const tabs = await chrome.tabs.query({});
+        for (const tab of tabs) {
+            try {
+                await chrome.tabs.sendMessage(tab.id, { type: 'UPDATE_INDICATOR' });
+            } catch (error) {
+                // Ignore errors for tabs where content script is not running
+            }
+        }
+        
         setTimeout(() => {
             saveIndicatorSettingsButton.textContent = 'Save Indicator Settings';
         }, 2000);
     } catch (error) {
         console.error('Error saving indicator settings:', error);
+        saveIndicatorSettingsButton.textContent = 'Error Saving!';
+        setTimeout(() => {
+            saveIndicatorSettingsButton.textContent = 'Save Indicator Settings';
+        }, 2000);
     }
 }
 

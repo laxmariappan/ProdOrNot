@@ -5,7 +5,8 @@
   "description": "Mark any domain with a visual environment label (Dev, Staging, Prod)",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "action": {
     "default_popup": "src/popup/popup.html",
