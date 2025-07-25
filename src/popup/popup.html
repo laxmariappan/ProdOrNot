@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProdOrNot</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ProdOrNot</h1>
+        <div id="current-domain"></div>
+        <div class="environment-controls">
+            <select id="environment-select">
+                <option value="">Select Environment</option>
+                <!-- Will be populated dynamically -->
+            </select>
+            <button id="save-environment" class="primary-button">Save</button>
+            <button id="remove-environment" class="secondary-button">Remove</button>
+        </div>
+        <div class="settings-link">
+            <a href="#" id="open-settings">Manage All Settings</a>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html> 

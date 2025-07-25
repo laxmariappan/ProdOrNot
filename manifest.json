@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "ProdOrNot",
+  "version": "1.0.0",
+  "description": "Mark any domain with a visual environment label (Dev, Staging, Prod)",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": "public/icon.svg"
+  },
+  "options_page": "src/options/options.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/indicator.js"],
+      "css": ["src/content/indicator.css"]
+    }
+  ],
+  "icons": {
+    "128": "public/icon.svg"
+  }
+} 

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProdOrNot Settings</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ProdOrNot Settings</h1>
+            <p>Manage your environments and marked domains</p>
+        </header>
+
+        <section class="indicator-settings-section">
+            <h2>Indicator Settings</h2>
+            <div class="form-group">
+                <label>Indicator Style</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="indicator-style" value="ribbon" checked>
+                        Ribbon 🎗
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="indicator-style" value="triangle">
+                        Triangle ◤
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Position</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="indicator-position" value="top-right" checked>
+                        Top Right
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="indicator-position" value="top-left">
+                        Top Left
+                    </label>
+                </div>
+            </div>
+            <button id="save-indicator-settings" class="primary-button">Save Indicator Settings</button>
+        </section>
+
+        <section class="environments-section">
+            <h2>Environments</h2>
+            <div class="environments-list" id="environments-list">
+                <!-- Will be populated dynamically -->
+            </div>
+            <button id="add-environment" class="primary-button">Add New Environment</button>
+        </section>
+
+        <section class="domains-section">
+            <h2>Marked Domains</h2>
+            <div class="domains-list" id="domains-list">
+                <!-- Will be populated dynamically -->
+            </div>
+        </section>
+
+        <div id="environment-modal" class="modal">
+            <div class="modal-content">
+                <h3>Environment Settings</h3>
+                <form id="environment-form">
+                    <div class="form-group">
+                        <label for="env-label">Label</label>
+                        <input type="text" id="env-label" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="env-color">Color</label>
+                        <input type="color" id="env-color" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="env-icon">Icon (emoji)</label>
+                        <input type="text" id="env-icon" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="primary-button">Save</button>
+                        <button type="button" class="secondary-button" id="cancel-environment">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="options.js"></script>
+</body>
+</html> 
