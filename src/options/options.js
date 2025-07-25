@@ -69,8 +69,8 @@ function renderEnvironments() {
                 <span>${env.label}</span>
             </div>
             <div class="environment-actions">
-                <button class="secondary-button" onclick="editEnvironment('${env.id}')">Edit</button>
-                <button class="secondary-button" onclick="deleteEnvironment('${env.id}')">Delete</button>
+                <button class="secondary-button" data-action="edit-environment" data-id="${env.id}">Edit</button>
+                <button class="secondary-button" data-action="delete-environment" data-id="${env.id}">Delete</button>
             </div>
         </div>
     `).join('');
@@ -88,7 +88,7 @@ function renderDomains() {
                     <span>${environment.icon}</span>
                     <span>${domain}</span>
                 </div>
-                <button class="secondary-button" onclick="deleteDomain('${domain}')">Remove</button>
+                <button class="secondary-button" data-action="delete-domain" data-domain="${domain}">Remove</button>
             </div>
         `;
     });
@@ -98,15 +98,39 @@ function renderDomains() {
 
 // Setup event listeners
 function setupEventListeners() {
+    // Environment list event delegation
+    environmentsList.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+
+        const action = button.dataset.action;
+        const environmentId = button.dataset.id;
+
+        if (action === 'edit-environment') {
+            editEnvironment(environmentId);
+        } else if (action === 'delete-environment') {
+            deleteEnvironment(environmentId);
+        }
+    });
+
+    // Domains list event delegation
+    domainsList.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+
+        const action = button.dataset.action;
+        const domain = button.dataset.domain;
+
+        if (action === 'delete-domain') {
+            deleteDomain(domain);
+        }
+    });
+
+    // Other event listeners
     addEnvironmentButton.addEventListener('click', () => showEnvironmentModal());
     cancelEnvironmentButton.addEventListener('click', hideEnvironmentModal);
     environmentForm.addEventListener('submit', handleEnvironmentSubmit);
     saveIndicatorSettingsButton.addEventListener('click', saveIndicatorSettings);
-    
-    // Make these functions available globally for the onclick handlers
-    window.editEnvironment = editEnvironment;
-    window.deleteEnvironment = deleteEnvironment;
-    window.deleteDomain = deleteDomain;
 }
 
 // Show environment modal
