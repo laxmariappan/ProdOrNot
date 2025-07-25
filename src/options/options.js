@@ -207,11 +207,38 @@ async function deleteDomain(domain) {
     }
     
     try {
+        // Get current domains
+        const storage = await chrome.storage.sync.get(STORAGE_KEY);
+        const domains = storage[STORAGE_KEY] || {};
+        
+        // Delete the domain
         delete domains[domain];
+        
+        // Save updated domains
         await chrome.storage.sync.set({ [STORAGE_KEY]: domains });
+        
+        // Notify all tabs to update
+        const tabs = await chrome.tabs.query({});
+        for (const tab of tabs) {
+            try {
+                if (tab.url && new URL(tab.url).hostname === domain) {
+                    // Reload tabs with this domain
+                    chrome.tabs.reload(tab.id);
+                } else {
+                    // Just update indicator for other tabs
+                    chrome.tabs.sendMessage(tab.id, { type: 'UPDATE_INDICATOR' });
+                }
+            } catch (error) {
+                // Ignore errors for tabs where content script is not running
+                console.log('Error updating tab:', error);
+            }
+        }
+        
+        // Update the UI
         renderDomains();
     } catch (error) {
         console.error('Error deleting domain:', error);
+        alert('Failed to delete domain. Please try again.');
     }
 }
 

@@ -16,12 +16,20 @@ const DEFAULT_INDICATOR_SETTINGS = {
     position: 'top-right'
 };
 
+// Keep track of current state
+let currentDomain = null;
+let currentEnvironment = null;
+let currentSettings = null;
+
+// Initialize the indicator
+async function initialize() {
+    currentDomain = window.location.hostname;
+    await checkAndInjectIndicator();
+}
+
 // Check if the current domain is marked and inject the indicator if needed
 async function checkAndInjectIndicator() {
     try {
-        const currentDomain = window.location.hostname;
-        console.log('Checking domain:', currentDomain);
-        
         // Get all settings
         const storage = await chrome.storage.sync.get([
             STORAGE_KEY,
@@ -33,38 +41,51 @@ async function checkAndInjectIndicator() {
         const environments = storage[STORAGE_ENVIRONMENTS_KEY] || DEFAULT_ENVIRONMENTS;
         const indicatorSettings = storage[STORAGE_INDICATOR_SETTINGS_KEY] || DEFAULT_INDICATOR_SETTINGS;
         
-        console.log('Current indicator settings:', indicatorSettings);
+        console.log('Current settings:', {
+            domain: currentDomain,
+            domainSettings: domains[currentDomain],
+            indicatorSettings
+        });
+        
+        // Remove existing indicator
+        removeIndicator();
         
         // Check if current domain is marked
         const domainSettings = domains[currentDomain];
         if (!domainSettings) {
-            console.log('Domain not marked');
+            console.log('Domain not marked:', currentDomain);
             return;
         }
         
         // Find environment settings
         const environment = environments.find(env => env.id === domainSettings.environmentId);
         if (!environment) {
-            console.log('Environment not found');
+            console.log('Environment not found for:', domainSettings.environmentId);
             return;
         }
         
+        // Update current state
+        currentEnvironment = environment;
+        currentSettings = indicatorSettings;
+        
         // Inject the indicator
-        injectIndicator(environment, indicatorSettings);
+        injectIndicator();
     } catch (error) {
         console.error('Error checking domain settings:', error);
     }
 }
 
 // Get CSS for different indicator styles
-function getIndicatorStyles(environment, settings) {
-    console.log('Applying styles with settings:', settings);
+function getIndicatorStyles() {
+    if (!currentEnvironment || !currentSettings) return null;
+    
+    console.log('Applying styles with settings:', currentSettings);
     
     const baseStyles = {
         position: 'fixed',
         top: '0',
-        [settings.position === 'top-right' ? 'right' : 'left']: '0',
-        [settings.position === 'top-right' ? 'left' : 'right']: 'auto', // Important: reset the opposite property
+        [currentSettings.position === 'top-right' ? 'right' : 'left']: '0',
+        [currentSettings.position === 'top-right' ? 'left' : 'right']: 'auto',
         'z-index': '999999',
         'font-family': '-apple-system, BlinkMacSystemFont, sans-serif',
         'font-size': '12px',
@@ -73,15 +94,15 @@ function getIndicatorStyles(environment, settings) {
         'user-select': 'none',
         'pointer-events': 'none',
         'color': 'white',
-        'background-color': environment.color
+        'background-color': currentEnvironment.color
     };
 
-    if (settings.style === 'ribbon') {
+    if (currentSettings.style === 'ribbon') {
         return {
             ...baseStyles,
             padding: '4px 12px',
-            'border-bottom-left-radius': settings.position === 'top-right' ? '4px' : '0',
-            'border-bottom-right-radius': settings.position === 'top-left' ? '4px' : '0',
+            'border-bottom-left-radius': currentSettings.position === 'top-right' ? '4px' : '0',
+            'border-bottom-right-radius': currentSettings.position === 'top-left' ? '4px' : '0',
             display: 'flex',
             'align-items': 'center',
             gap: '4px'
@@ -92,45 +113,55 @@ function getIndicatorStyles(environment, settings) {
             width: '0',
             height: '0',
             'border-style': 'solid',
-            'border-width': '0 32px 32px 0',
-            'border-color': `transparent ${environment.color} transparent transparent`,
             'background-color': 'transparent',
             padding: '0'
         };
 
-        if (settings.position === 'top-left') {
+        if (currentSettings.position === 'top-left') {
             triangleStyles['border-width'] = '0 0 32px 32px';
-            triangleStyles['border-color'] = `transparent transparent transparent ${environment.color}`;
+            triangleStyles['border-color'] = `transparent transparent transparent ${currentEnvironment.color}`;
+        } else {
+            triangleStyles['border-width'] = '0 32px 32px 0';
+            triangleStyles['border-color'] = `transparent ${currentEnvironment.color} transparent transparent`;
         }
 
         return triangleStyles;
     }
 }
 
-// Inject the visual indicator
-function injectIndicator(environment, settings) {
-    // Remove any existing indicator
+// Remove existing indicator
+function removeIndicator() {
     const existingIndicator = document.getElementById('prodornot-indicator');
     if (existingIndicator) {
         existingIndicator.remove();
     }
+}
+
+// Inject the visual indicator
+function injectIndicator() {
+    if (!currentEnvironment || !currentSettings) return;
+    
+    // Remove any existing indicator
+    removeIndicator();
     
     // Create the indicator element
     const indicator = document.createElement('div');
     indicator.id = 'prodornot-indicator';
-    indicator.setAttribute('aria-label', `Environment: ${environment.label}`);
+    indicator.setAttribute('aria-label', `Environment: ${currentEnvironment.label}`);
     
     // Get and apply styles
-    const styles = getIndicatorStyles(environment, settings);
+    const styles = getIndicatorStyles();
+    if (!styles) return;
+    
     indicator.style.cssText = Object.entries(styles)
         .map(([key, value]) => `${key}: ${value}`)
         .join(';');
     
     // Add content based on style
-    if (settings.style === 'ribbon') {
+    if (currentSettings.style === 'ribbon') {
         indicator.innerHTML = `
-            <span>${environment.icon}</span>
-            <span>${environment.label}</span>
+            <span>${currentEnvironment.icon}</span>
+            <span>${currentEnvironment.label}</span>
         `;
     }
     
@@ -141,19 +172,8 @@ function injectIndicator(environment, settings) {
 
 // Listen for storage changes
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'sync' && (
-        changes[STORAGE_KEY] ||
-        changes[STORAGE_ENVIRONMENTS_KEY] ||
-        changes[STORAGE_INDICATOR_SETTINGS_KEY]
-    )) {
+    if (namespace === 'sync') {
         console.log('Storage changes detected:', changes);
-        // Remove existing indicator if present
-        const existingIndicator = document.getElementById('prodornot-indicator');
-        if (existingIndicator) {
-            existingIndicator.remove();
-        }
-        
-        // Recheck and inject if needed
         checkAndInjectIndicator();
     }
 });
@@ -165,10 +185,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-// Initial check when content script loads
-// Wait for document body to be available
-if (document.body) {
-    checkAndInjectIndicator();
+// Initialize when the script loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
 } else {
-    document.addEventListener('DOMContentLoaded', checkAndInjectIndicator);
+    initialize();
 } 
