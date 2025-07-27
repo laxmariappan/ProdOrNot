@@ -1,0 +1,25 @@
+name: Release Extension
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create Extension Package
+        run: |
+          zip -r ProdOrNot.zip manifest.json public src LICENSE README.md
+      
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./ProdOrNot.zip
+          asset_name: ProdOrNot.zip
+          asset_content_type: application/zip 
