@@ -2,6 +2,19 @@
 
 A minimal Chrome extension that helps you visually identify different environments (Development, Staging, Production) for your web applications.
 
+**Set the environment**  
+
+<img width="553" height="262" alt="Screenshot 2025-07-28 at 5 20 00 AM" src="https://github.com/user-attachments/assets/bdf45d02-c17b-484c-a661-e5baee146212" />  
+
+**Indicator in action**  
+
+<img width="582" height="151" alt="Screenshot 2025-07-28 at 5 20 58 AM" src="https://github.com/user-attachments/assets/ed8cc8bc-2d9f-4a00-9789-9eb6aa75baf7" />  
+
+**Settings**  
+<img width="992" height="904" alt="Screenshot 2025-07-28 at 5 22 46 AM" src="https://github.com/user-attachments/assets/42df4a05-2ed3-405d-a436-309b4e3f5d93" />  
+
+
+
 ## Features
 
 - Mark any domain or subdomain with a visual environment indicator
